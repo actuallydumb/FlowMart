@@ -1,0 +1,277 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres.onehhjginfliphrulxmt:haresh@2003@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String?      @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  role          UserRole     @default(BUYER)
+  bio           String?
+  website       String?
+  organizationId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  workflows     Workflow[]
+  purchases     Purchase[]
+  earnings      Earnings[]
+  adminReviews  AdminReview[]
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  workflowLogs  WorkflowLog[]
+  workflowVersions WorkflowVersion[]
+  workflowExecutions WorkflowExecution[]
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  workflows   Workflow[]
+  rateLimits  RateLimit[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Workflow {
+  id           String          @id @default(cuid())
+  name         String
+  description  String
+  price        Float
+  fileUrl      String
+  previewUrl   String?
+  tags         Tag[]
+  status       WorkflowStatus  @default(PENDING)
+  downloads    Int             @default(0)
+  isPublic     Boolean         @default(false)
+  isFeatured   Boolean         @default(false)
+  version      Int             @default(1)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization Organization?   @relation(fields: [organizationId], references: [id])
+  
+  purchases    Purchase[]
+  adminReviews AdminReview[]
+  versions     WorkflowVersion[]
+  logs         WorkflowLog[]
+  executions   WorkflowExecution[]
+}
+
+model WorkflowVersion {
+  id          String   @id @default(cuid())
+  version     Int
+  name        String
+  description String
+  fileUrl     String
+  changelog   String?
+  createdAt   DateTime @default(now())
+  
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  createdById String
+  createdBy   User    @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model WorkflowExecution {
+  id          String   @id @default(cuid())
+  status      ExecutionStatus @default(PENDING)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  error       String?
+  result      Json?
+  
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  executedById String
+  executedBy   User    @relation(fields: [executedById], references: [id], onDelete: Cascade)
+}
+
+model WorkflowLog {
+  id          String   @id @default(cuid())
+  level       LogLevel @default(INFO)
+  message     String
+  metadata    Json?
+  timestamp   DateTime @default(now())
+  
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  
+  workflows Workflow[]
+}
+
+model Purchase {
+  id         String         @id @default(cuid())
+  amount     Float
+  status     PurchaseStatus @default(PENDING)
+  createdAt  DateTime       @default(now())
+  
+  workflowId String
+  workflow   Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  buyerId    String
+  buyer      User           @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  // Back relation to Earnings (1-to-1)
+  earnings   Earnings?
+}
+
+model Earnings {
+  id          String         @id @default(cuid())
+  amount      Float
+  status      EarningsStatus @default(PENDING)
+  createdAt   DateTime       @default(now())
+  
+  developerId String
+  developer   User           @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  
+  purchaseId  String         @unique
+  purchase    Purchase       @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+}
+
+model AdminReview {
+  id         String        @id @default(cuid())
+  status     ReviewStatus
+  comment    String?
+  createdAt  DateTime      @default(now())
+  
+  workflowId String
+  workflow   Workflow      @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  adminId    String
+  admin      User          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model RateLimit {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  endpoint        String
+  limit           Int
+  window          Int // in seconds
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Plugin {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  version     String
+  author      String
+  fileUrl     String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  DEVELOPER
+  BUYER
+}
+
+enum WorkflowStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum EarningsStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum ReviewStatus {
+  APPROVED
+  REJECTED
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}

@@ -1,0 +1,446 @@
+# WorkflowHub - AI Workflow Automation Platform
+
+## 🎯 Project Overview
+
+WorkflowHub is a full-stack SaaS platform for buying, selling, and automating workflows. It's a marketplace where developers can upload automation workflows and users can purchase them for their business needs.
+
+## 🏗️ Architecture
+
+### Tech Stack
+
+- **Frontend**: Next.js 14, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API routes, Prisma ORM, PostgreSQL
+- **Authentication**: NextAuth.js (Credentials + Google/Notion/Slack OAuth)
+- **Payments**: Stripe integration with webhooks
+- **File Storage**: UploadThing integration
+- **Testing**: Jest, React Testing Library
+- **Database**: PostgreSQL with Prisma migrations
+- **Deployment**: Docker, Vercel, Fly.io, GitHub Actions
+
+### Project Structure
+
+```
+/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # User dashboard
+│   ├── marketplace/       # Workflow marketplace
+│   └── workflow/          # Workflow detail pages
+├── components/            # Reusable UI components
+├── lib/                   # Utility libraries
+├── prisma/               # Database schema and migrations
+├── types/                # TypeScript type definitions
+├── __tests__/            # Test files
+├── scripts/              # CLI tools
+└── docs/                 # Documentation
+```
+
+## 🗄️ Database Schema
+
+### Core Models
+
+- **User**: Authentication, roles (ADMIN, DEVELOPER, BUYER), profiles
+- **Workflow**: Workflow metadata, files, status, pricing
+- **Purchase**: Transaction records for workflow purchases
+- **Earnings**: Developer payout tracking
+- **Tag**: Categories for organizing workflows
+- **Organization**: Multi-tenant support
+- **WorkflowVersion**: Version control for workflows
+- **WorkflowExecution**: Execution tracking and logs
+- **RateLimit**: Per-organization rate limiting
+
+### Key Relationships
+
+- Users can have multiple workflows (1:N)
+- Workflows can have multiple tags (M:N)
+- Purchases link buyers to workflows (1:N)
+- Earnings track developer payouts (1:1 with Purchase)
+
+## 🔐 Authentication System
+
+### Providers
+
+1. **Credentials Provider**: Email/password with bcrypt hashing
+2. **Google OAuth**: Social login integration
+3. **Notion OAuth**: Professional tool integration
+4. **Slack OAuth**: Team collaboration integration
+
+### User Roles
+
+- **ADMIN**: Platform management, workflow approval
+- **DEVELOPER**: Upload workflows, earn from sales
+- **BUYER**: Purchase workflows, access downloads
+
+### Security Features
+
+- Password hashing with bcrypt (12 rounds)
+- JWT session management
+- Role-based access control
+- Secure file upload validation
+
+## 💳 Payment System
+
+### Stripe Integration
+
+- Checkout sessions for workflow purchases
+- Webhook processing for payment confirmation
+- Automatic earnings calculation (70% to developer)
+- Download access control based on purchase status
+
+### Purchase Flow
+
+1. User selects workflow in marketplace
+2. Stripe checkout session created
+3. Payment processed via Stripe
+4. Webhook updates database with purchase
+5. User gains download access
+6. Developer earnings calculated and recorded
+
+## 📁 File Upload System
+
+### UploadThing Integration
+
+- Secure file storage with access control
+- File type validation (JSON, YAML, PDF)
+- Size limits (8MB for text/PDF, 4MB for images)
+- Automatic file URL generation
+
+### Upload Process
+
+1. User selects file in upload dialog
+2. File uploaded to UploadThing
+3. File URL stored in database
+4. Workflow metadata saved with file reference
+5. Status set to PENDING for admin review
+
+## 🧪 Testing Strategy
+
+### Test Types
+
+- **Unit Tests**: Individual function testing
+- **Integration Tests**: API route testing
+- **Component Tests**: UI component testing
+- **Schema Tests**: Zod validation testing
+
+### Test Coverage
+
+- Purchasing logic (Stripe integration)
+- Workflow upload (file storage)
+- Authentication (password hashing, OAuth)
+- API routes (database operations)
+- Schema validation (input validation)
+
+### Mock Strategy
+
+- External services (Stripe, UploadThing, Redis)
+- Database operations (Prisma)
+- Authentication (NextAuth.js)
+- File operations
+
+## 🚀 Deployment
+
+### Environment Setup
+
+```env
+# Database
+DATABASE_URL="postgresql://..."
+
+# Authentication
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# Payments
+STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
+# File Storage
+UPLOADTHING_SECRET="sk_live_..."
+UPLOADTHING_APP_ID="your-app-id"
+
+# AI Services
+OPENAI_API_KEY="sk-..."
+ANTHROPIC_API_KEY="sk-ant-..."
+
+# Monitoring
+SENTRY_DSN="https://..."
+LOGTAIL_TOKEN="your-logtail-token"
+```
+
+### Deployment Options
+
+1. **Vercel**: Frontend and API routes
+2. **Fly.io**: Full-stack deployment
+3. **Railway**: Database and backend
+4. **Docker**: Containerized deployment
+
+## 📋 Coding Standards
+
+### TypeScript
+
+- Strict type checking enabled
+- Proper interface definitions
+- Zod schemas for validation
+- No `any` types unless absolutely necessary
+
+### Code Organization
+
+- Feature-based file organization
+- Consistent naming conventions
+- Proper separation of concerns
+- Reusable component patterns
+
+### Error Handling
+
+- Try-catch blocks for async operations
+- Proper error responses in API routes
+- User-friendly error messages
+- Logging for debugging
+
+### Performance
+
+- Database query optimization
+- Image optimization with Next.js
+- Code splitting and lazy loading
+- Caching strategies
+
+## 🔧 Development Workflow
+
+### Setup Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Setup database
+npm run db:generate
+npm run db:push
+
+# Run development server
+npm run dev
+
+# Run tests
+npm test
+npm run test:full
+```
+
+### Database Commands
+
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Push schema changes
+npm run db:push
+
+# Reset database
+npm run db:reset
+
+# Seed database
+npm run db:seed
+```
+
+### Testing Commands
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run full test suite (lint + type-check + tests)
+npm run test:full
+```
+
+## 🎨 UI/UX Guidelines
+
+### Design System
+
+- **shadcn/ui**: Component library
+- **Tailwind CSS**: Utility-first styling
+- **Lucide React**: Icon library
+- **Sonner**: Toast notifications
+
+### Color Scheme
+
+- Primary: Blue (#3B82F6)
+- Success: Green (#10B981)
+- Warning: Yellow (#F59E0B)
+- Error: Red (#EF4444)
+- Neutral: Gray scale
+
+### Responsive Design
+
+- Mobile-first approach
+- Breakpoints: sm, md, lg, xl
+- Flexible grid layouts
+- Touch-friendly interactions
+
+## 🔍 Code Quality
+
+### Linting
+
+- ESLint configuration
+- Prettier formatting
+- TypeScript strict mode
+- Import sorting
+
+### Git Workflow
+
+- Feature branch development
+- Conventional commit messages
+- Pull request reviews
+- Automated testing in CI/CD
+
+### Documentation
+
+- Inline code comments
+- README files for each major feature
+- API documentation
+- Deployment guides
+
+## 🚨 Security Considerations
+
+### Input Validation
+
+- Zod schemas for all inputs
+- File type and size validation
+- SQL injection prevention (Prisma)
+- XSS protection
+
+### Authentication Security
+
+- Secure password hashing
+- JWT token management
+- Session security
+- OAuth security best practices
+
+### Payment Security
+
+- Stripe webhook signature verification
+- Secure payment processing
+- PCI compliance
+- Fraud detection
+
+### File Upload Security
+
+- File type validation
+- Size limits
+- Malware scanning (future)
+- Access control
+
+## 📊 Monitoring & Analytics
+
+### Error Tracking
+
+- Sentry integration
+- Error logging
+- Performance monitoring
+- User feedback collection
+
+### Analytics
+
+- User behavior tracking
+- Conversion metrics
+- Performance analytics
+- Business metrics
+
+## 🔄 CI/CD Pipeline
+
+### GitHub Actions
+
+- Automated testing
+- Type checking
+- Linting
+- Security scanning
+- Deployment automation
+
+### Deployment Stages
+
+1. **Development**: Local development
+2. **Staging**: Pre-production testing
+3. **Production**: Live environment
+
+## 🎯 Key Features
+
+### For Developers
+
+- Workflow upload and management
+- Earnings tracking
+- Analytics dashboard
+- Version control
+
+### For Buyers
+
+- Workflow marketplace
+- Secure purchasing
+- Download access
+- Usage tracking
+
+### For Admins
+
+- Workflow approval system
+- User management
+- Platform analytics
+- Content moderation
+
+## 🚀 Future Enhancements
+
+### Planned Features
+
+- AI-powered workflow generation
+- Plugin marketplace
+- Advanced analytics
+- Team collaboration
+- API integrations
+- Mobile app
+
+### Technical Improvements
+
+- Real-time notifications
+- Advanced caching
+- Microservices architecture
+- GraphQL API
+- Real-time collaboration
+
+## 📞 Support & Maintenance
+
+### Bug Reports
+
+- GitHub Issues
+- Error logging
+- User feedback
+- Performance monitoring
+
+### Updates
+
+- Regular dependency updates
+- Security patches
+- Feature releases
+- Documentation updates
+
+---
+
+## 🎯 Development Guidelines
+
+When working on this project:
+
+1. **Always use TypeScript** - No JavaScript files
+2. **Follow the established patterns** - Check existing code for consistency
+3. **Write tests for new features** - Maintain test coverage
+4. **Use proper error handling** - Never let errors bubble up to users
+5. **Validate all inputs** - Use Zod schemas
+6. **Follow security best practices** - Especially for payments and file uploads
+7. **Document new features** - Update README and inline comments
+8. **Test thoroughly** - Unit, integration, and end-to-end tests
+9. **Optimize for performance** - Database queries, image loading, etc.
+10. **Maintain accessibility** - WCAG guidelines compliance
+
+Remember: This is a production application handling real payments and user data. Security and reliability are paramount.
