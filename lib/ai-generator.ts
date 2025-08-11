@@ -2,13 +2,14 @@ import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize AI clients only if API keys are available
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
 
 export class AIGenerator {
   async generateWorkflowFromDescription(
@@ -64,6 +65,10 @@ export class AIGenerator {
   }
 
   private async generateWorkflowCode(description: string) {
+    if (!openai) {
+      throw new Error("OpenAI API key not configured");
+    }
+
     const prompt = `
 You are an expert automation workflow developer. Create a JavaScript workflow based on this description:
 
@@ -107,6 +112,10 @@ Return only the JavaScript code, no explanations.
   }
 
   private async generateWorkflowMetadata(description: string, tags: string[]) {
+    if (!openai) {
+      throw new Error("OpenAI API key not configured");
+    }
+
     const prompt = `
 Generate metadata for a workflow based on this description:
 
@@ -162,6 +171,10 @@ Example:
   }
 
   async enhanceWorkflowWithAI(workflowId: string, enhancement: string) {
+    if (!openai) {
+      throw new Error("OpenAI API key not configured");
+    }
+
     const workflow = await prisma.workflow.findUnique({
       where: { id: workflowId },
       include: { tags: true },
@@ -223,6 +236,10 @@ Return only the JavaScript code, no explanations.
   }
 
   async generateWorkflowSuggestions(userId: string) {
+    if (!openai) {
+      throw new Error("OpenAI API key not configured");
+    }
+
     const userWorkflows = await prisma.workflow.findMany({
       where: { userId },
       include: { tags: true },

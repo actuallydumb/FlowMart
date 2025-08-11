@@ -1,6 +1,9 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is available
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 export const sendWorkflowSubmittedEmail = async ({
   developerEmail,
@@ -12,6 +15,13 @@ export const sendWorkflowSubmittedEmail = async ({
   workflowName: string;
 }) => {
   try {
+    if (!resend) {
+      console.log(
+        "Email service not configured - skipping workflow submitted email"
+      );
+      return;
+    }
+
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: developerEmail,
@@ -41,6 +51,13 @@ export const sendWorkflowApprovedEmail = async ({
   workflowName: string;
 }) => {
   try {
+    if (!resend) {
+      console.log(
+        "Email service not configured - skipping workflow approved email"
+      );
+      return;
+    }
+
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: developerEmail,
@@ -72,6 +89,11 @@ export const sendWorkflowRejectedEmail = async ({
   reason?: string;
 }) => {
   try {
+    if (!resend) {
+      console.log("Email service not configured - skipping workflow rejected email");
+      return;
+    }
+    
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: developerEmail,
@@ -104,6 +126,11 @@ export const sendPurchaseConfirmationEmail = async ({
   amount: number;
 }) => {
   try {
+    if (!resend) {
+      console.log("Email service not configured - skipping purchase confirmation email");
+      return;
+    }
+    
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: buyerEmail,

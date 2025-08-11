@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
     domains: [
       "github.com",
@@ -39,10 +36,6 @@ const nextConfig = {
       },
     ];
   },
-  // Environment variables
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
   // Webpack configuration
   webpack: (config, { isServer }) => {
     // Optimize bundle size
@@ -54,6 +47,14 @@ const nextConfig = {
         tls: false,
       };
     }
+
+    // Ensure PostCSS plugins are properly resolved
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      autoprefixer: require.resolve("autoprefixer"),
+      postcss: require.resolve("postcss"),
+    };
+
     return config;
   },
 };

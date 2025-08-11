@@ -11,6 +11,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if AI is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        message: "AI suggestions not available - API key not configured",
+      });
+    }
+
     const suggestions = await aiGenerator.generateWorkflowSuggestions(
       session.user.id
     );
