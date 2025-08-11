@@ -90,7 +90,15 @@ export class RuntimeEngine {
         },
       });
 
-      return updatedExecution;
+      return {
+        ...updatedExecution,
+        completedAt: updatedExecution.completedAt || undefined,
+        error: updatedExecution.error || undefined,
+        executedBy: {
+          ...updatedExecution.executedBy,
+          name: updatedExecution.executedBy.name || "Unknown User",
+        },
+      };
     } catch (error) {
       // Update execution with error
       const updatedExecution = await prisma.workflowExecution.update({
@@ -219,7 +227,15 @@ export class RuntimeEngine {
       skip: offset,
     });
 
-    return executions;
+    return executions.map((execution) => ({
+      ...execution,
+      completedAt: execution.completedAt || undefined,
+      error: execution.error || undefined,
+      executedBy: {
+        ...execution.executedBy,
+        name: execution.executedBy.name || "Unknown User",
+      },
+    }));
   }
 
   async getWorkflowLogs(

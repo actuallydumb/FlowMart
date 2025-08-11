@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,19 +13,28 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Mail, Lock, User } from "lucide-react";
+import { Package, Mail, Lock, User, Badge } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>("BUYER");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+
+  useEffect(() => {
+    const role = searchParams.get("role");
+    if (role === "seller") {
+      setSelectedRole("DEVELOPER");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +56,7 @@ export default function SignUpPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          roles: [selectedRole],
         }),
       });
 
@@ -60,7 +70,8 @@ export default function SignUpPage() {
         });
 
         if (result?.ok) {
-          router.push("/dashboard");
+          // Redirect to onboarding instead of dashboard
+          router.push("/onboarding");
         } else {
           toast.error("Failed to sign in after registration");
         }
@@ -80,12 +91,12 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
             <Package className="h-8 w-8 text-primary mr-2" />
-            <span className="text-xl font-bold">WorkflowHub</span>
+            <span className="text-xl font-bold">WorkflowKart</span>
           </div>
           <CardTitle className="text-2xl">Create Account</CardTitle>
           <CardDescription>
@@ -94,6 +105,47 @@ export default function SignUpPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Role Selection */}
+            <div>
+              <Label className="text-base font-medium">I want to:</Label>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("BUYER")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    selectedRole === "BUYER"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-muted-foreground/20 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <div className="flex flex-col items-center space-y-2">
+                    <Package className="h-6 w-6" />
+                    <span className="font-medium">Buy Workflows</span>
+                    <span className="text-xs text-muted-foreground text-center">
+                      Discover and use automation workflows
+                    </span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("DEVELOPER")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    selectedRole === "DEVELOPER"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-muted-foreground/20 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <div className="flex flex-col items-center space-y-2">
+                    <Badge className="h-6 w-6" />
+                    <span className="font-medium">Sell Workflows</span>
+                    <span className="text-xs text-muted-foreground text-center">
+                      Create and monetize your workflows
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">

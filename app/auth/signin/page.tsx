@@ -61,12 +61,12 @@ export default function SignInPage() {
   // Handle OAuth errors
   if (error === "OAuthAccountNotLinked") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 px-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4">
+        <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center mb-4">
               <Package className="h-8 w-8 text-primary mr-2" />
-              <span className="text-xl font-bold">WorkflowHub</span>
+              <span className="text-xl font-bold">WorkflowKart</span>
             </div>
             <CardTitle className="text-2xl">Account Already Exists</CardTitle>
             <CardDescription>
@@ -75,8 +75,8 @@ export default function SignInPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
                 This email is already registered. You can either sign in with
                 your password or link your Google account.
               </p>
@@ -185,15 +185,17 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
             <Package className="h-8 w-8 text-primary mr-2" />
-            <span className="text-xl font-bold">WorkflowHub</span>
+            <span className="text-xl font-bold">WorkflowKart</span>
           </div>
           <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your WorkflowHub account</CardDescription>
+          <CardDescription>
+            Sign in to your WorkflowKart account
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -17,25 +17,6 @@ WorkflowHub is a full-stack SaaS platform for buying, selling, and automating wo
 - **Database**: PostgreSQL with Prisma migrations
 - **Deployment**: Docker, Vercel, Fly.io, GitHub Actions
 
-### Project Structure
-
-```
-/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   ├── auth/              # Authentication pages
-│   ├── dashboard/         # User dashboard
-│   ├── marketplace/       # Workflow marketplace
-│   └── workflow/          # Workflow detail pages
-├── components/            # Reusable UI components
-├── lib/                   # Utility libraries
-├── prisma/               # Database schema and migrations
-├── types/                # TypeScript type definitions
-├── __tests__/            # Test files
-├── scripts/              # CLI tools
-└── docs/                 # Documentation
-```
-
 ## 🗄️ Database Schema
 
 ### Core Models

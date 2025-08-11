@@ -91,29 +91,40 @@ describe("Review Schema", () => {
   it("should validate a valid review", () => {
     const validReview = {
       workflowId: "workflow123",
-      status: "APPROVED",
-      comment: "Great workflow!",
+      rating: 5,
+      reviewText: "Great workflow!",
     };
 
     const result = reviewSchema.safeParse(validReview);
     expect(result.success).toBe(true);
   });
 
-  it("should validate review without comment", () => {
+  it("should validate review without reviewText", () => {
     const validReview = {
       workflowId: "workflow123",
-      status: "REJECTED",
+      rating: 4,
     };
 
     const result = reviewSchema.safeParse(validReview);
     expect(result.success).toBe(true);
   });
 
-  it("should reject review with invalid status", () => {
+  it("should reject review with invalid rating", () => {
     const invalidReview = {
       workflowId: "workflow123",
-      status: "INVALID_STATUS",
-      comment: "Great workflow!",
+      rating: 6,
+      reviewText: "Great workflow!",
+    };
+
+    const result = reviewSchema.safeParse(invalidReview);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject review with rating below 1", () => {
+    const invalidReview = {
+      workflowId: "workflow123",
+      rating: 0,
+      reviewText: "Great workflow!",
     };
 
     const result = reviewSchema.safeParse(invalidReview);

@@ -1,24 +1,16 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Navbar } from "@/components/navbar";
-import { Providers } from "@/components/providers";
 import "./globals.css";
+import { Providers } from "@/components/providers";
+import { Navbar } from "@/components/navbar";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
-  title: "WorkflowHub - Automation Workflow Marketplace",
+  title: "WorkflowKart - Your Marketplace for Workflows",
   description:
-    "Upload, sell, and share automation workflows. Find the perfect workflow for your needs.",
-  keywords: "automation, workflows, marketplace, n8n, zapier, scripts",
-  authors: [{ name: "WorkflowHub Team" }],
-  openGraph: {
-    title: "WorkflowHub - Automation Workflow Marketplace",
-    description:
-      "Upload, sell, and share automation workflows. Find the perfect workflow for your needs.",
-    type: "website",
-  },
+    "Build, buy, and automate your business processes with powerful workflows from our marketplace.",
 };
 
 export default function RootLayout({
@@ -27,12 +19,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark')
+                } else {
+                  document.documentElement.classList.remove('dark')
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <Providers>
           <div className="min-h-screen bg-background">
             <Navbar />
             <main>{children}</main>
+            <Toaster />
           </div>
         </Providers>
       </body>

@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { UserRoles } from "@/types";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -42,7 +43,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           image: user.image,
-          role: user.role,
+          roles: user.roles,
         };
       },
     }),
@@ -106,13 +107,13 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }) => {
       if (session?.user && token) {
         session.user.id = token.sub as string;
-        session.user.role = (token.role as string) || "BUYER";
+        session.user.roles = (token.roles as UserRoles) || ["BUYER"];
       }
       return session;
     },
     jwt: async ({ user, token }) => {
       if (user) {
-        token.role = user.role || "BUYER";
+        token.roles = user.roles || ["BUYER"];
       }
       return token;
     },
@@ -134,7 +135,7 @@ export const authOptions: NextAuthOptions = {
               email: user.email,
               name: user.name,
               image: user.image,
-              role: "BUYER",
+              roles: ["BUYER"],
             },
           });
         }
@@ -157,7 +158,7 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-// Extend the NextAuth types to include user ID and role
+// Extend the NextAuth types to include user ID and roles
 declare module "next-auth" {
   interface Session {
     user: {
@@ -165,17 +166,17 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      role: string;
+      roles: UserRoles;
     };
   }
 
   interface User {
-    role?: string;
+    roles?: UserRoles;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    role?: string;
+    roles?: UserRoles;
   }
 }

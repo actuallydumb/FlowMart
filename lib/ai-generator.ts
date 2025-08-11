@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db";
-import { workflowSchema } from "@/types";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

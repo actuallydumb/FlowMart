@@ -8,6 +8,16 @@ export const workflowSchema = z.object({
   tags: z.array(z.string()).min(1, "At least one tag is required"),
   isPublic: z.boolean().optional(),
   organizationId: z.string().optional(),
+  prerequisites: z.string().optional(),
+  documentation: z.string().optional(),
+  mediaUrls: z.array(z.string().url()).optional(),
+  videoUrl: z.string().url().optional(),
+});
+
+export const reviewSchema = z.object({
+  workflowId: z.string(),
+  rating: z.number().min(1).max(5),
+  reviewText: z.string().optional(),
 });
 
 export const purchaseSchema = z.object({
@@ -15,7 +25,7 @@ export const purchaseSchema = z.object({
   amount: z.number().positive(),
 });
 
-export const reviewSchema = z.object({
+export const adminReviewSchema = z.object({
   workflowId: z.string(),
   status: z.enum(["APPROVED", "REJECTED"]),
   comment: z.string().optional(),
@@ -41,6 +51,7 @@ export const organizationSchema = z.object({
 
 // Database Types
 export type UserRole = "ADMIN" | "DEVELOPER" | "BUYER";
+export type UserRoles = UserRole[];
 export type WorkflowStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type PurchaseStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
 export type EarningsStatus = "PENDING" | "PAID" | "FAILED";
@@ -53,11 +64,52 @@ export type ExecutionStatus =
   | "CANCELLED";
 export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 
+// Role utility types
+export type RoleCheck = (roles: UserRoles) => boolean;
+export type RoleRequirement = UserRole | UserRoles;
+
+// Role checking utilities
+export const hasRole = (roles: UserRoles, requiredRole: UserRole): boolean => {
+  return roles.includes(requiredRole);
+};
+
+export const hasAnyRole = (
+  roles: UserRoles,
+  requiredRoles: UserRoles
+): boolean => {
+  return requiredRoles.some((role) => roles.includes(role));
+};
+
+export const hasAllRoles = (
+  roles: UserRoles,
+  requiredRoles: UserRoles
+): boolean => {
+  return requiredRoles.every((role) => roles.includes(role));
+};
+
+export const isAdmin = (roles: UserRoles): boolean => hasRole(roles, "ADMIN");
+export const isDeveloper = (roles: UserRoles): boolean =>
+  hasRole(roles, "DEVELOPER");
+export const isBuyer = (roles: UserRoles): boolean => hasRole(roles, "BUYER");
+
 // API Response Types
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+export interface WorkflowReview {
+  id: string;
+  rating: number;
+  reviewText?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  user: {
+    id: string;
+    name: string;
+    image?: string;
+  };
 }
 
 export interface WorkflowWithUser {
@@ -67,6 +119,10 @@ export interface WorkflowWithUser {
   price: number;
   fileUrl: string;
   previewUrl?: string;
+  prerequisites?: string;
+  documentation?: string;
+  mediaUrls: string[];
+  videoUrl?: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   downloads: number;
   isPublic: boolean;
@@ -87,6 +143,9 @@ export interface WorkflowWithUser {
     id: string;
     name: string;
   }>;
+  reviews?: WorkflowReview[];
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export interface PurchaseWithWorkflow {

@@ -1,17 +1,20 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from "sonner";
-import { UploadThingProvider } from "@uploadthing/react";
-import { uploadRouter } from "@/lib/uploadthing";
+import { ThemeProvider } from "next-themes";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <UploadThingProvider uploadRouter={uploadRouter}>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange={false}
+        storageKey="workflowkart-theme"
+      >
         {children}
-        <Toaster position="top-right" />
-      </UploadThingProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

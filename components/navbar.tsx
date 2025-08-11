@@ -1,9 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,120 +12,469 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Package,
+  Search,
+  Menu,
+  X,
+  User,
+  Settings,
+  LogOut,
+  Moon,
+  Sun,
+  ShoppingCart,
+  Upload,
+  BarChart3,
+  Shield,
+  Users,
+  FileText,
+  DollarSign,
+  Home,
+  BookOpen,
+} from "lucide-react";
+import { hasRole } from "@/types";
+import { useTheme } from "next-themes";
 
 export function Navbar() {
   const { data: session } = useSession();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
+  // Ensure component is mounted before rendering theme-dependent content
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isBuyer = session?.user?.roles && hasRole(session.user.roles, "BUYER");
+  const isDeveloper =
+    session?.user?.roles && hasRole(session.user.roles, "DEVELOPER");
+  const isAdmin = session?.user?.roles && hasRole(session.user.roles, "ADMIN");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/marketplace?search=${encodeURIComponent(searchQuery.trim())}`;
+    }
+  };
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/" });
+  };
+
+  const toggleTheme = () => {
+    if (resolvedTheme === "dark") {
+      setTheme("light");
+    } else {
+      setTheme("dark");
+    }
+  };
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
               <Package className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">WorkflowHub</span>
+              <span className="text-xl font-bold">WorkflowKart</span>
             </Link>
+            <div className="h-9 w-9" /> {/* Placeholder for theme toggle */}
           </div>
+        </div>
+      </nav>
+    );
+  }
 
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+  return (
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            <Package className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold">WorkflowKart</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-6">
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="relative w-80">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search workflows..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </form>
+
+            {/* Main Navigation Links */}
+            <div className="flex items-center space-x-4">
               <Link
                 href="/marketplace"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+                className="flex items-center space-x-1 text-sm font-medium hover:text-primary"
               >
-                Marketplace
+                <ShoppingCart className="h-4 w-4" />
+                <span>Marketplace</span>
               </Link>
-              {session?.user?.role === "DEVELOPER" && (
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground"
-                >
-                  Dashboard
-                </Link>
-              )}
-              {session?.user?.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground"
-                >
-                  Admin
-                </Link>
-              )}
-            </div>
-          </div>
 
-          <div className="flex items-center space-x-4">
-            {session ? (
+              <Link
+                href="/blog"
+                className="flex items-center space-x-1 text-sm font-medium hover:text-primary"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Blog</span>
+              </Link>
+
+              <Link
+                href="/pricing"
+                className="flex items-center space-x-1 text-sm font-medium hover:text-primary"
+              >
+                <DollarSign className="h-4 w-4" />
+                <span>Pricing</span>
+              </Link>
+            </div>
+
+            {/* Dark Mode Toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="h-9 w-9 p-0 relative"
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+
+            {/* User Menu */}
+            {session?.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
+                    className="relative h-9 w-9 rounded-full"
                   >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={session.user?.image || ""}
-                        alt={session.user?.name || ""}
-                      />
-                      <AvatarFallback>
-                        {session.user?.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {session.user?.name}
+                        {session.user.name}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {session.user?.email}
+                        {session.user.email}
                       </p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {session.user.roles?.map((role) => (
+                          <Badge
+                            key={role}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+
+                  {/* Role-based menu items */}
+                  {isBuyer && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard" className="flex items-center">
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          My Purchases
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  {isDeveloper && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard" className="flex items-center">
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/dashboard?tab=developer"
+                          className="flex items-center"
+                        >
+                          <Package className="mr-2 h-4 w-4" />
+                          My Workflows
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="flex items-center">
+                          <Shield className="mr-2 h-4 w-4" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/admin/sellers"
+                          className="flex items-center"
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Seller Management
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
+                    <Link href="/profile" className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                      Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="cursor-pointer">
-                      <Package className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
+                    <Link href="/settings" className="flex items-center">
                       <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
+                      Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => signOut()}
+                    onClick={handleSignOut}
+                    className="flex items-center"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
                 <Button variant="ghost" asChild>
                   <Link href="/auth/signin">Sign In</Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/auth/signin">Get Started</Link>
+                  <Link href="/auth/signup">Get Started</Link>
                 </Button>
               </div>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="flex items-center space-x-2 md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="h-9 w-9 p-0"
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="h-9 w-9 p-0"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-4 w-4" />
+              ) : (
+                <Menu className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="space-y-4 pb-4 pt-2">
+              {/* Mobile Search */}
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search workflows..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </form>
+
+              {/* Mobile Navigation Links */}
+              <div className="space-y-2">
+                <Link
+                  href="/marketplace"
+                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>Marketplace</span>
+                </Link>
+
+                <Link
+                  href="/blog"
+                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span>Blog</span>
+                </Link>
+
+                <Link
+                  href="/pricing"
+                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <DollarSign className="h-4 w-4" />
+                  <span>Pricing</span>
+                </Link>
+              </div>
+
+              {/* Mobile User Menu */}
+              {session?.user ? (
+                <div className="space-y-2 border-t pt-4">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium">{session.user.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {session.user.email}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {session.user.roles?.map((role) => (
+                        <Badge
+                          key={role}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {role}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {isBuyer && (
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      <span>My Purchases</span>
+                    </Link>
+                  )}
+
+                  {isDeveloper && (
+                    <>
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                      <Link
+                        href="/dashboard?tab=developer"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Package className="h-4 w-4" />
+                        <span>My Workflows</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {isAdmin && (
+                    <>
+                      <Link
+                        href="/admin"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                      <Link
+                        href="/admin/sellers"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Users className="h-4 w-4" />
+                        <span>Seller Management</span>
+                      </Link>
+                    </>
+                  )}
+
+                  <Link
+                    href="/profile"
+                    className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2 border-t pt-4">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    asChild
+                  >
+                    <Link
+                      href="/auth/signin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button className="w-full justify-start" asChild>
+                    <Link
+                      href="/auth/signup"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Get Started
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

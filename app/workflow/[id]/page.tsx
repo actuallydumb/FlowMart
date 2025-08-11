@@ -24,8 +24,13 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  BookOpen,
+  Settings,
 } from "lucide-react";
-import { WorkflowWithUser } from "@/types";
+import { WorkflowWithUser, WorkflowReview } from "@/types";
+import { ReviewForm } from "@/components/review-form";
+import { ReviewsList } from "@/components/reviews-list";
+import { MediaGallery } from "@/components/media-gallery";
 import { toast } from "sonner";
 
 export default function WorkflowDetailPage({
@@ -35,6 +40,7 @@ export default function WorkflowDetailPage({
 }) {
   const { data: session } = useSession();
   const [workflow, setWorkflow] = useState<WorkflowWithUser | null>(null);
+  const [userReview, setUserReview] = useState<WorkflowReview | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +48,7 @@ export default function WorkflowDetailPage({
   useEffect(() => {
     fetchWorkflow();
     checkPurchaseStatus();
+    fetchUserReview();
   }, [params.id, session?.user?.id]);
 
   const fetchWorkflow = async () => {
@@ -72,6 +79,23 @@ export default function WorkflowDetailPage({
       }
     } catch (error) {
       console.error("Error checking purchase status:", error);
+    }
+  };
+
+  const fetchUserReview = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      const response = await fetch(`/api/workflows/${params.id}/reviews`);
+      if (response.ok) {
+        const { reviews } = await response.json();
+        const userReview = reviews.find(
+          (review: WorkflowReview) => review.user.id === session.user.id
+        );
+        setUserReview(userReview || null);
+      }
+    } catch (error) {
+      console.error("Error fetching user review:", error);
     }
   };
 
@@ -127,6 +151,21 @@ export default function WorkflowDetailPage({
       console.error("Download error:", error);
       toast.error("Failed to download workflow");
     }
+  };
+
+  const handleReviewSubmitted = (review: WorkflowReview) => {
+    setUserReview(review);
+    fetchWorkflow(); // Refresh workflow to update average rating
+  };
+
+  const handleReviewUpdated = (review: WorkflowReview) => {
+    setUserReview(review);
+    fetchWorkflow(); // Refresh workflow to update average rating
+  };
+
+  const handleReviewDeleted = () => {
+    setUserReview(null);
+    fetchWorkflow(); // Refresh workflow to update average rating
   };
 
   if (isLoading) {
@@ -186,7 +225,80 @@ export default function WorkflowDetailPage({
             <p className="text-muted-foreground text-lg">
               {workflow.description}
             </p>
+
+            {/* Rating Display */}
+            {workflow.averageRating && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < Math.round(workflow.averageRating!)
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm font-medium">
+                  {workflow.averageRating.toFixed(1)}
+                </span>
+                {workflow.reviewCount && (
+                  <span className="text-sm text-muted-foreground">
+                    ({workflow.reviewCount} review
+                    {workflow.reviewCount > 1 ? "s" : ""})
+                  </span>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Media Gallery */}
+          {(workflow.mediaUrls?.length > 0 || workflow.videoUrl) && (
+            <MediaGallery
+              images={workflow.mediaUrls || []}
+              videoUrl={workflow.videoUrl}
+            />
+          )}
+
+          {/* Prerequisites */}
+          {workflow.prerequisites && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Prerequisites
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm max-w-none">
+                  <p className="whitespace-pre-wrap">
+                    {workflow.prerequisites}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Documentation */}
+          {workflow.documentation && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Documentation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap">
+                    {workflow.documentation}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Tags */}
           <div>
@@ -247,6 +359,27 @@ export default function WorkflowDetailPage({
                 </p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Reviews Section */}
+          <div className="space-y-6">
+            {/* Review Form */}
+            {hasPurchased && !isOwner && (
+              <ReviewForm
+                workflowId={params.id}
+                existingReview={userReview}
+                onReviewSubmitted={handleReviewSubmitted}
+                onReviewUpdated={handleReviewUpdated}
+                onReviewDeleted={handleReviewDeleted}
+              />
+            )}
+
+            {/* Reviews List */}
+            <ReviewsList
+              reviews={workflow.reviews || []}
+              averageRating={workflow.averageRating}
+              reviewCount={workflow.reviewCount}
+            />
           </div>
         </div>
 

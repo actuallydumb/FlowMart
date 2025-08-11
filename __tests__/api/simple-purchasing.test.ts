@@ -1,38 +1,13 @@
+// Mock dependencies
+jest.mock("@/lib/db");
+jest.mock("@/lib/stripe");
+
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 
-// Mock dependencies
-jest.mock("@/lib/db", () => ({
-  prisma: {
-    workflow: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-    purchase: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-    },
-    earnings: {
-      create: jest.fn(),
-    },
-    user: {
-      findUnique: jest.fn(),
-    },
-  },
-}));
-
-jest.mock("@/lib/stripe", () => ({
-  stripe: {
-    checkout: {
-      sessions: {
-        create: jest.fn(),
-      },
-    },
-    webhooks: {
-      constructEvent: jest.fn(),
-    },
-  },
-}));
+// Type the mocks
+const mockPrisma = jest.mocked(prisma);
+const mockStripe = jest.mocked(stripe);
 
 describe("Purchasing Logic", () => {
   beforeEach(() => {
@@ -44,18 +19,40 @@ describe("Purchasing Logic", () => {
       const mockWorkflow = {
         id: "workflow123",
         name: "Test Workflow",
+        description: "A test workflow",
         price: 29.99,
-        status: "APPROVED",
+        fileUrl: "https://example.com/workflow.json",
+        previewUrl: null,
+        status: "APPROVED" as const,
+        downloads: 0,
+        isPublic: false,
+        isFeatured: false,
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: "user123",
+        organizationId: null,
       };
 
       const mockCheckoutSession = {
         id: "cs_test_123",
         url: "https://checkout.stripe.com/test",
-      };
+        object: "checkout.session",
+        amount_total: 2999,
+        currency: "usd",
+        status: "complete",
+        payment_status: "paid",
+        metadata: {
+          workflowId: "workflow123",
+          buyerId: "user123",
+        },
+      } as any;
 
-      prisma.workflow.findUnique.mockResolvedValue(mockWorkflow);
-      prisma.purchase.findFirst.mockResolvedValue(null);
-      stripe.checkout.sessions.create.mockResolvedValue(mockCheckoutSession);
+      mockPrisma.workflow.findUnique.mockResolvedValue(mockWorkflow);
+      mockPrisma.purchase.findFirst.mockResolvedValue(null);
+      mockStripe.checkout.sessions.create.mockResolvedValue(
+        mockCheckoutSession
+      );
 
       // Simulate the checkout logic
       const session = await stripe.checkout.sessions.create({
@@ -108,10 +105,12 @@ describe("Purchasing Logic", () => {
         id: "purchase123",
         workflowId: "workflow123",
         buyerId: "user123",
-        status: "COMPLETED",
+        amount: 29.99,
+        status: "COMPLETED" as const,
+        createdAt: new Date(),
       };
 
-      prisma.purchase.findFirst.mockResolvedValue(mockPurchase);
+      mockPrisma.purchase.findFirst.mockResolvedValue(mockPurchase);
 
       const purchase = await prisma.purchase.findFirst({
         where: {
@@ -122,11 +121,11 @@ describe("Purchasing Logic", () => {
       });
 
       expect(purchase).toBeTruthy();
-      expect(purchase.status).toBe("COMPLETED");
+      expect(purchase?.status).toBe("COMPLETED");
     });
 
     it("should return false if user has not purchased workflow", async () => {
-      prisma.purchase.findFirst.mockResolvedValue(null);
+      mockPrisma.purchase.findFirst.mockResolvedValue(null);
 
       const purchase = await prisma.purchase.findFirst({
         where: {
@@ -154,12 +153,25 @@ describe("Purchasing Logic", () => {
             },
           },
         },
-      };
+      } as any;
 
       const mockWorkflow = {
         id: "workflow123",
         name: "Test Workflow",
-        user: { id: "creator123" },
+        description: "A test workflow",
+        price: 29.99,
+        fileUrl: "https://example.com/workflow.json",
+        previewUrl: null,
+        status: "APPROVED" as const,
+        downloads: 0,
+        isPublic: false,
+        isFeatured: false,
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: "creator123",
+        organizationId: null,
+        user: { id: "creator123", name: "Creator", image: null },
       };
 
       const mockPurchase = {
@@ -167,19 +179,32 @@ describe("Purchasing Logic", () => {
         workflowId: "workflow123",
         buyerId: "user123",
         amount: 29.99,
-        status: "COMPLETED",
+        status: "COMPLETED" as const,
+        createdAt: new Date(),
         workflow: mockWorkflow,
-        buyer: { email: "test@example.com", name: "Test User" },
+        buyer: {
+          id: "user123",
+          email: "test@example.com",
+          name: "Test User",
+          image: null,
+        },
       };
 
-      stripe.webhooks.constructEvent.mockReturnValue(mockEvent);
-      prisma.workflow.findUnique.mockResolvedValue(mockWorkflow);
-      prisma.purchase.create.mockResolvedValue(mockPurchase);
-      prisma.workflow.update.mockResolvedValue({});
-      prisma.earnings.create.mockResolvedValue({});
+      mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
+      mockPrisma.workflow.findUnique.mockResolvedValue(mockWorkflow);
+      mockPrisma.purchase.create.mockResolvedValue(mockPurchase);
+      mockPrisma.workflow.update.mockResolvedValue(mockWorkflow);
+      mockPrisma.earnings.create.mockResolvedValue({
+        id: "earnings123",
+        amount: 20.99,
+        status: "PENDING" as const,
+        createdAt: new Date(),
+        developerId: "creator123",
+        purchaseId: "purchase123",
+      });
 
       // Simulate webhook processing
-      const event = stripe.webhooks.constructEvent(
+      const event = mockStripe.webhooks.constructEvent(
         JSON.stringify(mockEvent),
         "test_signature",
         process.env.STRIPE_WEBHOOK_SECRET!
@@ -190,9 +215,9 @@ describe("Purchasing Logic", () => {
 
         const purchase = await prisma.purchase.create({
           data: {
-            workflowId: session.metadata.workflowId,
-            buyerId: session.metadata.buyerId,
-            amount: session.amount_total / 100,
+            workflowId: session.metadata?.workflowId || "",
+            buyerId: session.metadata?.buyerId || "",
+            amount: (session.amount_total || 0) / 100,
             status: "COMPLETED",
           },
           include: {
@@ -206,7 +231,7 @@ describe("Purchasing Logic", () => {
         });
 
         await prisma.workflow.update({
-          where: { id: session.metadata.workflowId },
+          where: { id: session.metadata?.workflowId || "" },
           data: {
             downloads: {
               increment: 1,
@@ -214,7 +239,7 @@ describe("Purchasing Logic", () => {
           },
         });
 
-        const developerEarnings = (session.amount_total * 0.7) / 100;
+        const developerEarnings = ((session.amount_total || 0) * 0.7) / 100;
         await prisma.earnings.create({
           data: {
             developerId: purchase.workflow.userId,

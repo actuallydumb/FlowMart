@@ -1,22 +1,11 @@
+// Mock dependencies
+jest.mock("@/lib/db");
+
 import { prisma } from "@/lib/db";
 import { workflowSchema } from "@/types";
 
-// Mock dependencies
-jest.mock("@/lib/db", () => ({
-  prisma: {
-    workflow: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-    },
-    tag: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-    },
-    user: {
-      findUnique: jest.fn(),
-    },
-  },
-}));
+// Type the mocks
+const mockPrisma = jest.mocked(prisma);
 
 describe("Workflow Upload Logic", () => {
   beforeEach(() => {
@@ -34,15 +23,23 @@ describe("Workflow Upload Logic", () => {
       };
 
       const mockCreatedTags = [
-        { id: "tag1", name: "Email" },
-        { id: "tag2", name: "Marketing" },
+        { id: "tag1", name: "Email", createdAt: new Date() },
+        { id: "tag2", name: "Marketing", createdAt: new Date() },
       ];
 
       const mockCreatedWorkflow = {
         id: "workflow123",
         ...mockWorkflowData,
-        status: "PENDING",
+        previewUrl: null,
+        status: "PENDING" as const,
+        downloads: 0,
+        isPublic: false,
+        isFeatured: false,
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         userId: "user123",
+        organizationId: null,
         user: { id: "user123", name: "Test User", image: null },
         tags: mockCreatedTags,
       };
@@ -52,15 +49,15 @@ describe("Workflow Upload Logic", () => {
       expect(validationResult.success).toBe(true);
 
       // Mock tag creation
-      prisma.tag.findUnique
+      mockPrisma.tag.findUnique
         .mockResolvedValueOnce(null) // Email tag doesn't exist
         .mockResolvedValueOnce(null); // Marketing tag doesn't exist
-      prisma.tag.create
+      mockPrisma.tag.create
         .mockResolvedValueOnce(mockCreatedTags[0])
         .mockResolvedValueOnce(mockCreatedTags[1]);
 
       // Mock workflow creation
-      prisma.workflow.create.mockResolvedValue(mockCreatedWorkflow);
+      mockPrisma.workflow.create.mockResolvedValue(mockCreatedWorkflow);
 
       // Simulate the workflow creation process
       const createdTags = await Promise.all(
@@ -121,15 +118,23 @@ describe("Workflow Upload Logic", () => {
       };
 
       const mockExistingTags = [
-        { id: "tag1", name: "Email" },
-        { id: "tag2", name: "Marketing" },
+        { id: "tag1", name: "Email", createdAt: new Date() },
+        { id: "tag2", name: "Marketing", createdAt: new Date() },
       ];
 
       const mockCreatedWorkflow = {
         id: "workflow123",
         ...mockWorkflowData,
-        status: "PENDING",
+        previewUrl: null,
+        status: "PENDING" as const,
+        downloads: 0,
+        isPublic: false,
+        isFeatured: false,
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         userId: "user123",
+        organizationId: null,
         user: { id: "user123", name: "Test User", image: null },
         tags: mockExistingTags,
       };
@@ -139,12 +144,12 @@ describe("Workflow Upload Logic", () => {
       expect(validationResult.success).toBe(true);
 
       // Mock existing tags
-      prisma.tag.findUnique
+      mockPrisma.tag.findUnique
         .mockResolvedValueOnce(mockExistingTags[0]) // Email tag exists
         .mockResolvedValueOnce(mockExistingTags[1]); // Marketing tag exists
 
       // Mock workflow creation
-      prisma.workflow.create.mockResolvedValue(mockCreatedWorkflow);
+      mockPrisma.workflow.create.mockResolvedValue(mockCreatedWorkflow);
 
       // Simulate the workflow creation process
       const createdTags = await Promise.all(
@@ -256,26 +261,42 @@ describe("Workflow Upload Logic", () => {
           name: "Email Marketing",
           description: "Email marketing automation",
           price: 29.99,
-          status: "APPROVED",
+          fileUrl: "https://example.com/workflow1.json",
+          previewUrl: null,
+          status: "APPROVED" as const,
           downloads: 10,
+          isPublic: false,
+          isFeatured: false,
+          version: 1,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: "user1",
+          organizationId: null,
           user: { id: "user1", name: "Creator 1", image: null },
-          tags: [{ id: "tag1", name: "Email" }],
+          tags: [{ id: "tag1", name: "Email", createdAt: new Date() }],
         },
         {
           id: "workflow2",
           name: "CRM Integration",
           description: "CRM integration workflow",
           price: 49.99,
-          status: "APPROVED",
+          fileUrl: "https://example.com/workflow2.json",
+          previewUrl: null,
+          status: "APPROVED" as const,
           downloads: 5,
+          isPublic: false,
+          isFeatured: false,
+          version: 1,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: "user2",
+          organizationId: null,
           user: { id: "user2", name: "Creator 2", image: null },
-          tags: [{ id: "tag2", name: "CRM" }],
+          tags: [{ id: "tag2", name: "CRM", createdAt: new Date() }],
         },
       ];
 
-      prisma.workflow.findMany.mockResolvedValue(mockWorkflows);
+      mockPrisma.workflow.findMany.mockResolvedValue(mockWorkflows);
 
       const workflows = await prisma.workflow.findMany({
         where: {

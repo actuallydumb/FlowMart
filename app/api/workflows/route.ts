@@ -45,13 +45,35 @@ export async function GET(request: NextRequest) {
           },
         },
         tags: true,
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return NextResponse.json(workflows);
+    // Calculate average ratings for each workflow
+    const workflowsWithRatings = workflows.map((workflow) => {
+      const totalRating = workflow.reviews.reduce(
+        (sum, review) => sum + review.rating,
+        0
+      );
+      const averageRating =
+        workflow.reviews.length > 0 ? totalRating / workflow.reviews.length : 0;
+
+      return {
+        ...workflow,
+        averageRating: Math.round(averageRating * 10) / 10,
+        reviewCount: workflow.reviews.length,
+        reviews: undefined, // Remove reviews array from response
+      };
+    });
+
+    return NextResponse.json(workflowsWithRatings);
   } catch (error) {
     console.error("Error fetching workflows:", error);
     return NextResponse.json(
@@ -70,8 +92,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, price, fileUrl, tags } =
-      workflowSchema.parse(body);
+    const {
+      name,
+      description,
+      price,
+      fileUrl,
+      tags,
+      prerequisites,
+      documentation,
+      mediaUrls,
+      videoUrl,
+    } = workflowSchema.parse(body);
 
     // Create or find tags
     const tagPromises = tags.map(async (tagName: string) => {
@@ -97,6 +128,10 @@ export async function POST(request: NextRequest) {
         description,
         price,
         fileUrl,
+        prerequisites,
+        documentation,
+        mediaUrls: mediaUrls || [],
+        videoUrl,
         status: "PENDING",
         userId: session.user.id,
         tags: {

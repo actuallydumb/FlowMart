@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
         id: updatedUser.id,
         name: updatedUser.name,
         email: updatedUser.email,
-        role: updatedUser.role,
+        roles: updatedUser.roles,
       },
     });
   } catch (error) {

@@ -44,8 +44,29 @@ model User {
   password      String?
   emailVerified DateTime?
   image         String?
-  role          UserRole     @default(BUYER)
+  roles         UserRole[]   @default([BUYER])
   bio           String?
+
+  // Onboarding fields
+  onboardingCompleted Boolean @default(false)
+  onboardingStep      Int     @default(1)
+  interests           String[] // For buyers - selected workflow categories
+  integrations        String[] // For buyers - connected integrations
+  
+  // Seller-specific fields
+  profession          String?
+  experienceYears     Int?
+  verificationDocs    String[] // Array of document URLs
+  isSellerVerified    Boolean  @default(false)
+  sellerVerificationStatus SellerStatus @default(PENDING)
+  
+  // Payment details for sellers
+  bankAccountName     String?
+  bankAccountNumber   String?
+  bankRoutingNumber   String?
+  paypalEmail         String?
+  stripeAccountId     String?
+
   website       String?
   organizationId String?
   createdAt     DateTime     @default(now())
@@ -57,10 +78,13 @@ model User {
   purchases     Purchase[]
   earnings      Earnings[]
   adminReviews  AdminReview[]
+  workflowReviews WorkflowReview[]
   organization  Organization? @relation(fields: [organizationId], references: [id])
   workflowLogs  WorkflowLog[]
   workflowVersions WorkflowVersion[]
   workflowExecutions WorkflowExecution[]
+  sellerVerifications SellerVerification[]
+  sellerReviews SellerVerification[] @relation("SellerReviewer")
 }
 
 model Organization {
@@ -92,6 +116,10 @@ model Workflow {
   price        Float
   fileUrl      String
   previewUrl   String?
+  prerequisites String?        // Required setup before using the workflow
+  documentation String?        // Detailed instructions on using the workflow
+  mediaUrls    String[]        // Array of image URLs for screenshots
+  videoUrl     String?         // Video URL for demo/tutorial
   tags         Tag[]
   status       WorkflowStatus  @default(PENDING)
   downloads    Int             @default(0)
@@ -108,6 +136,7 @@ model Workflow {
   
   purchases    Purchase[]
   adminReviews AdminReview[]
+  reviews      WorkflowReview[]
   versions     WorkflowVersion[]
   logs         WorkflowLog[]
   executions   WorkflowExecution[]
@@ -208,15 +237,77 @@ model AdminReview {
   admin      User          @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }
 
+model WorkflowReview {
+  id          String   @id @default(cuid())
+  rating      Int      // 1-5 stars
+  reviewText  String?  // Optional review text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([workflowId, userId]) // One review per user per workflow
+}
+
 model RateLimit {
-  id              String   @id @default(cuid())
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  endpoint        String
-  limit           Int
-  window          Int // in seconds
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  organizationId String
+  endpoint       String
+  limit          Int
+  window         Int      // in seconds
+  current        Int      @default(0)
+  resetAt        DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, endpoint])
+}
+
+model Blog {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  excerpt   String
+  content   String   @db.Text
+  image     String?
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  company   String
+  quote     String   @db.Text
+  avatar    String
+  rating    Int      @default(5)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SellerVerification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  status    SellerStatus @default(PENDING)
+  submittedAt DateTime @default(now())
+  reviewedAt DateTime?
+  reviewedBy String?
+  notes     String?
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer  User?    @relation("SellerReviewer", fields: [reviewedBy], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Plugin {
@@ -270,8 +361,14 @@ enum ExecutionStatus {
 }
 
 enum LogLevel {
-  DEBUG
   INFO
-  WARN
+  WARNING
   ERROR
+  DEBUG
+}
+
+enum SellerStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

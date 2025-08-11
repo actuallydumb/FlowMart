@@ -1,21 +1,14 @@
+// Mock dependencies
+jest.mock("@/lib/db");
+jest.mock("bcryptjs");
+
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 
-// Mock dependencies
-jest.mock("@/lib/db", () => ({
-  prisma: {
-    user: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-    },
-  },
-}));
-
-jest.mock("bcryptjs", () => ({
-  hash: jest.fn(),
-  compare: jest.fn(),
-}));
+// Type the mocks
+const mockPrisma = jest.mocked(prisma);
+const mockBcrypt = jest.mocked(bcrypt);
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -41,8 +34,15 @@ describe("Manual Authentication Logic", () => {
         id: "user123",
         name: mockUserData.name,
         email: mockUserData.email,
-        role: "BUYER",
+        role: "BUYER" as const,
         password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        organizationId: null,
+        emailVerified: null,
+        image: null,
+        bio: null,
+        website: null,
       };
 
       // Validate input data
@@ -50,9 +50,9 @@ describe("Manual Authentication Logic", () => {
       expect(validationResult.success).toBe(true);
 
       // Mock database operations
-      prisma.user.findUnique.mockResolvedValue(null);
-      bcrypt.hash.mockResolvedValue(hashedPassword);
-      prisma.user.create.mockResolvedValue(mockCreatedUser);
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      (mockBcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
+      mockPrisma.user.create.mockResolvedValue(mockCreatedUser);
 
       // Simulate the signup process
       const { name, email, password } = mockUserData;
@@ -96,6 +96,15 @@ describe("Manual Authentication Logic", () => {
         id: "user123",
         name: "Existing User",
         email: "test@example.com",
+        role: "BUYER" as const,
+        password: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        organizationId: null,
+        emailVerified: null,
+        image: null,
+        bio: null,
+        website: null,
       };
 
       // Validate input data
@@ -103,7 +112,7 @@ describe("Manual Authentication Logic", () => {
       expect(validationResult.success).toBe(true);
 
       // Mock existing user
-      prisma.user.findUnique.mockResolvedValue(existingUser);
+      mockPrisma.user.findUnique.mockResolvedValue(existingUser);
 
       // Simulate the signup process
       const { email } = mockUserData;
@@ -113,7 +122,7 @@ describe("Manual Authentication Logic", () => {
       });
 
       expect(existingUserCheck).toBeTruthy();
-      expect(existingUserCheck.email).toBe("test@example.com");
+      expect(existingUserCheck?.email).toBe("test@example.com");
     });
   });
 
@@ -159,12 +168,19 @@ describe("Manual Authentication Logic", () => {
         email: "test@example.com",
         password: "hashed_password_123",
         name: "Test User",
-        role: "BUYER",
+        role: "BUYER" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        organizationId: null,
+        emailVerified: null,
+        image: null,
+        bio: null,
+        website: null,
       };
 
       // Mock database and bcrypt operations
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      bcrypt.compare.mockResolvedValue(true);
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (mockBcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       // Simulate authentication process
       const email = "test@example.com";
@@ -194,12 +210,19 @@ describe("Manual Authentication Logic", () => {
         email: "test@example.com",
         password: "hashed_password_123",
         name: "Test User",
-        role: "BUYER",
+        role: "BUYER" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        organizationId: null,
+        emailVerified: null,
+        image: null,
+        bio: null,
+        website: null,
       };
 
       // Mock database and bcrypt operations
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      bcrypt.compare.mockResolvedValue(false);
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (mockBcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       // Simulate authentication process
       const email = "test@example.com";
@@ -221,7 +244,7 @@ describe("Manual Authentication Logic", () => {
 
     it("should reject non-existent user", async () => {
       // Mock database operation
-      prisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue(null);
 
       // Simulate authentication process
       const email = "nonexistent@example.com";

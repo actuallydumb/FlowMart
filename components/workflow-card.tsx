@@ -35,10 +35,19 @@ export function WorkflowCard({
               {workflow.description}
             </CardDescription>
           </div>
-          <div className="flex items-center space-x-1">
-            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-            <span className="text-sm font-medium">4.8</span>
-          </div>
+          {workflow.averageRating && (
+            <div className="flex items-center space-x-1">
+              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+              <span className="text-sm font-medium">
+                {workflow.averageRating.toFixed(1)}
+              </span>
+              {workflow.reviewCount && (
+                <span className="text-xs text-muted-foreground">
+                  ({workflow.reviewCount})
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center space-x-2 mb-3">
