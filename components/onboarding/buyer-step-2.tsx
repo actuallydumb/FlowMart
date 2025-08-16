@@ -96,7 +96,7 @@ export default function BuyerStep2({
 
   const handleNext = () => {
     onNext({
-      step: 2,
+      step: "buyer-2",
       integrations: selectedIntegrations,
     });
   };

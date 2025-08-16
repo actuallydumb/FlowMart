@@ -58,6 +58,20 @@ const onboardingSchema = z.discriminatedUnion("step", [
   sellerStep4Schema,
 ]);
 
+// Helper function to convert step string to number
+function getStepNumber(step: string): number {
+  const stepMap: Record<string, number> = {
+    "buyer-1": 1,
+    "buyer-2": 2,
+    "buyer-3": 3,
+    "seller-1": 1,
+    "seller-2": 2,
+    "seller-3": 3,
+    "seller-4": 4,
+  };
+  return stepMap[step] || 1;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -70,7 +84,7 @@ export async function POST(request: NextRequest) {
     const validatedData = onboardingSchema.parse(body);
 
     const updateData: any = {
-      onboardingStep: validatedData.step,
+      onboardingStep: getStepNumber(validatedData.step),
     };
 
     // Handle different step data based on user type and step
@@ -118,18 +132,17 @@ export async function POST(request: NextRequest) {
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: updateData,
-      select: {
-        onboardingCompleted: true,
-        onboardingStep: true,
-        roles: true,
-        sellerVerificationStatus: true,
-        isSellerVerified: true,
-      },
     });
 
     return NextResponse.json({
       success: true,
-      user: updatedUser,
+      user: {
+        onboardingCompleted: updatedUser.onboardingCompleted,
+        onboardingStep: updatedUser.onboardingStep,
+        roles: updatedUser.roles,
+        sellerVerificationStatus: updatedUser.sellerVerificationStatus,
+        isSellerVerified: updatedUser.isSellerVerified,
+      },
     });
   } catch (error) {
     console.error("Error saving onboarding data:", error);

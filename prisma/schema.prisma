@@ -85,6 +85,7 @@ model User {
   workflowExecutions WorkflowExecution[]
   sellerVerifications SellerVerification[]
   sellerReviews SellerVerification[] @relation("SellerReviewer")
+  blogPosts BlogPost[]
 }
 
 model Organization {
@@ -277,6 +278,35 @@ model Blog {
   content   String   @db.Text
   image     String?
   published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  excerpt   String
+  content   String   @db.Text
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  tags      String[]
+  category  String
+  featured  Boolean  @default(false)
+  published Boolean  @default(false)
+  image     String?
+  readTime  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  status    String   @default("PENDING") // PENDING, RESPONDED, CLOSED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

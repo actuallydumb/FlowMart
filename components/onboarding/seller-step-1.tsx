@@ -82,7 +82,7 @@ export default function SellerStep1({ onNext, isSaving }: SellerStep1Props) {
     }
 
     onNext({
-      step: 1,
+      step: "seller-1",
       name: formData.name.trim(),
       profession: formData.profession.trim(),
       experienceYears: parseInt(formData.experienceYears),

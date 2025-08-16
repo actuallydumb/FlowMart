@@ -91,6 +91,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is a verified developer
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        roles: true,
+        sellerVerificationStatus: true,
+      },
+    });
+
+    if (!user || !user.roles.includes("DEVELOPER")) {
+      return NextResponse.json(
+        { error: "Only verified developers can upload workflows" },
+        { status: 403 }
+      );
+    }
+
+    if (user.sellerVerificationStatus !== "APPROVED") {
+      return NextResponse.json(
+        {
+          error:
+            "Your developer account is not verified. Please complete the verification process before uploading workflows.",
+          verificationStatus: user.sellerVerificationStatus,
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       name,

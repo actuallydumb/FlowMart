@@ -35,6 +35,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Build artifacts
+.next/
+out/
+dist/
+
+# Development files
+app/theme-test/
+cursor_improvement_after_prompt/
 
 # IDE
 .vscode/

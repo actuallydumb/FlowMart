@@ -53,7 +53,7 @@ export default function BuyerStep3({
 }: BuyerStep3Props) {
   const handleComplete = () => {
     onNext({
-      step: 3,
+      step: "buyer-3",
       completed: true,
     });
   };

@@ -102,7 +102,7 @@ export default function BuyerStep1({ onNext, isSaving }: BuyerStep1Props) {
     }
 
     onNext({
-      step: 1,
+      step: getStepNumber("buyer-1"),
       interests: selectedInterests,
     });
   };
@@ -175,4 +175,7 @@ export default function BuyerStep1({ onNext, isSaving }: BuyerStep1Props) {
       </div>
     </div>
   );
+}
+function getStepNumber(arg0: string) {
+  throw new Error("Function not implemented.");
 }

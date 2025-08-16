@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,6 +46,7 @@ export function UploadWorkflowDialog({
   onOpenChange,
   onWorkflowUploaded,
 }: UploadWorkflowDialogProps) {
+  const { data: session } = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [newMediaUrl, setNewMediaUrl] = useState("");
@@ -131,8 +133,26 @@ export function UploadWorkflowDialog({
     setIsUploading(true);
 
     try {
-      // For now, create a mock file URL since UploadThing needs credentials
-      const mockFileUrl = `https://example.com/workflows/${selectedFile.name}`;
+      // Upload file to UploadThing
+      if (!selectedFile) {
+        throw new Error("No file selected");
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("userId", session?.user?.id || "");
+
+      const uploadResponse = await fetch("/api/uploadthing", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload file");
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const fileUrl = uploadResult.url;
 
       // Create workflow in database
       const response = await fetch("/api/workflows", {
@@ -144,7 +164,7 @@ export function UploadWorkflowDialog({
           name: data.name,
           description: data.description,
           price: data.price,
-          fileUrl: mockFileUrl,
+          fileUrl: fileUrl,
           tags: selectedTags,
           prerequisites: data.prerequisites || undefined,
           documentation: data.documentation || undefined,

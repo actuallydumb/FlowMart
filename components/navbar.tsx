@@ -30,9 +30,9 @@ import {
   Shield,
   Users,
   FileText,
-  DollarSign,
   Home,
-  BookOpen,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 import { hasRole } from "@/types";
 import { useTheme } from "next-themes";
@@ -53,6 +53,7 @@ export function Navbar() {
   const isDeveloper =
     session?.user?.roles && hasRole(session.user.roles, "DEVELOPER");
   const isAdmin = session?.user?.roles && hasRole(session.user.roles, "ADMIN");
+  const isVerified = session?.user?.sellerVerificationStatus === "APPROVED";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +82,7 @@ export function Navbar() {
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
               <Package className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">WorkflowKart</span>
+              <span className="text-xl font-bold">WorkflowHub</span>
             </Link>
             <div className="h-9 w-9" /> {/* Placeholder for theme toggle */}
           </div>
@@ -117,27 +118,27 @@ export function Navbar() {
             {/* Main Navigation Links */}
             <div className="flex items-center space-x-4">
               <Link
+                href="/"
+                className="flex items-center space-x-1 text-sm font-medium hover:text-primary transition-colors"
+              >
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </Link>
+
+              <Link
                 href="/marketplace"
-                className="flex items-center space-x-1 text-sm font-medium hover:text-primary"
+                className="flex items-center space-x-1 text-sm font-medium hover:text-primary transition-colors"
               >
                 <ShoppingCart className="h-4 w-4" />
-                <span>Marketplace</span>
+                <span>Workflows</span>
               </Link>
 
               <Link
-                href="/blog"
-                className="flex items-center space-x-1 text-sm font-medium hover:text-primary"
+                href="/about"
+                className="flex items-center space-x-1 text-sm font-medium hover:text-primary transition-colors"
               >
-                <BookOpen className="h-4 w-4" />
-                <span>Blog</span>
-              </Link>
-
-              <Link
-                href="/pricing"
-                className="flex items-center space-x-1 text-sm font-medium hover:text-primary"
-              >
-                <DollarSign className="h-4 w-4" />
-                <span>Pricing</span>
+                <FileText className="h-4 w-4" />
+                <span>About</span>
               </Link>
             </div>
 
@@ -187,6 +188,19 @@ export function Navbar() {
                           </Badge>
                         ))}
                       </div>
+                      {/* Verification Status for Developers */}
+                      {isDeveloper && (
+                        <div className="flex items-center gap-1 mt-1">
+                          {isVerified ? (
+                            <CheckCircle className="h-3 w-3 text-green-600" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3 text-yellow-600" />
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {isVerified ? "Verified" : "Pending Verification"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -220,6 +234,17 @@ export function Navbar() {
                           My Workflows
                         </Link>
                       </DropdownMenuItem>
+                      {isVerified && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/seller/create-workflow"
+                            className="flex items-center"
+                          >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Create Workflow
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
 
@@ -327,30 +352,30 @@ export function Navbar() {
               {/* Mobile Navigation Links */}
               <div className="space-y-2">
                 <Link
+                  href="/"
+                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </Link>
+
+                <Link
                   href="/marketplace"
-                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  <span>Marketplace</span>
+                  <span>Workflows</span>
                 </Link>
 
                 <Link
-                  href="/blog"
-                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                  href="/about"
+                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <BookOpen className="h-4 w-4" />
-                  <span>Blog</span>
-                </Link>
-
-                <Link
-                  href="/pricing"
-                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <DollarSign className="h-4 w-4" />
-                  <span>Pricing</span>
+                  <FileText className="h-4 w-4" />
+                  <span>About</span>
                 </Link>
               </div>
 
@@ -373,12 +398,25 @@ export function Navbar() {
                         </Badge>
                       ))}
                     </div>
+                    {/* Verification Status for Developers */}
+                    {isDeveloper && (
+                      <div className="flex items-center gap-1 mt-1">
+                        {isVerified ? (
+                          <CheckCircle className="h-3 w-3 text-green-600" />
+                        ) : (
+                          <AlertCircle className="h-3 w-3 text-yellow-600" />
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {isVerified ? "Verified" : "Pending Verification"}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {isBuyer && (
                     <Link
                       href="/dashboard"
-                      className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                      className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <ShoppingCart className="h-4 w-4" />
@@ -390,7 +428,7 @@ export function Navbar() {
                     <>
                       <Link
                         href="/dashboard"
-                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <BarChart3 className="h-4 w-4" />
@@ -398,12 +436,22 @@ export function Navbar() {
                       </Link>
                       <Link
                         href="/dashboard?tab=developer"
-                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Package className="h-4 w-4" />
                         <span>My Workflows</span>
                       </Link>
+                      {isVerified && (
+                        <Link
+                          href="/seller/create-workflow"
+                          className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <Upload className="h-4 w-4" />
+                          <span>Create Workflow</span>
+                        </Link>
+                      )}
                     </>
                   )}
 
@@ -411,7 +459,7 @@ export function Navbar() {
                     <>
                       <Link
                         href="/admin"
-                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Shield className="h-4 w-4" />
@@ -419,7 +467,7 @@ export function Navbar() {
                       </Link>
                       <Link
                         href="/admin/sellers"
-                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Users className="h-4 w-4" />
@@ -430,11 +478,20 @@ export function Navbar() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                    className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <User className="h-4 w-4" />
                     <span>Profile</span>
+                  </Link>
+
+                  <Link
+                    href="/settings"
+                    className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
                   </Link>
 
                   <button
@@ -442,7 +499,7 @@ export function Navbar() {
                       handleSignOut();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                    className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Sign out</span>

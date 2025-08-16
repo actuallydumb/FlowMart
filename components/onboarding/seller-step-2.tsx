@@ -82,7 +82,7 @@ export default function SellerStep2({
     }
 
     onNext({
-      step: 2,
+      step: "seller-2",
       bankAccountName: formData.bankAccountName.trim(),
       bankAccountNumber: formData.bankAccountNumber.replace(/\s/g, ""),
       bankRoutingNumber: formData.bankRoutingNumber.replace(/\s/g, ""),

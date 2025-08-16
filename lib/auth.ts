@@ -51,57 +51,6 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    // Notion OAuth Provider
-    {
-      id: "notion",
-      name: "Notion",
-      type: "oauth",
-      authorization: {
-        url: "https://api.notion.com/v1/oauth/authorize",
-        params: {
-          client_id: process.env.NOTION_CLIENT_ID!,
-          response_type: "code",
-          owner: "user",
-        },
-      },
-      token: "https://api.notion.com/v1/oauth/token",
-      userinfo: "https://api.notion.com/v1/users/me",
-      profile(profile) {
-        return {
-          id: profile.id,
-          name: profile.name,
-          email: profile.person?.email,
-          image: profile.avatar_url,
-        };
-      },
-      clientId: process.env.NOTION_CLIENT_ID!,
-      clientSecret: process.env.NOTION_CLIENT_SECRET!,
-    },
-    // Slack OAuth Provider
-    {
-      id: "slack",
-      name: "Slack",
-      type: "oauth",
-      authorization: {
-        url: "https://slack.com/oauth/v2/authorize",
-        params: {
-          client_id: process.env.SLACK_CLIENT_ID!,
-          scope: "identity.basic,identity.email,identity.avatar",
-        },
-      },
-      token: "https://slack.com/api/oauth.v2.access",
-      userinfo: "https://slack.com/api/users.identity",
-      profile(profile) {
-        return {
-          id: profile.user.id,
-          name: profile.user.name,
-          email: profile.user.email,
-          image: profile.user.image_192,
-        };
-      },
-      clientId: process.env.SLACK_CLIENT_ID!,
-      clientSecret: process.env.SLACK_CLIENT_SECRET!,
-    },
   ],
   callbacks: {
     session: async ({ session, token }) => {

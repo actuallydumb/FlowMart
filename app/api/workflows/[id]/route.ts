@@ -116,6 +116,35 @@ export async function PUT(
       );
     }
 
+    // For non-admin users, check if they are verified developers
+    if (!isAdmin) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          roles: true,
+          sellerVerificationStatus: true,
+        },
+      });
+
+      if (!user || !user.roles.includes("DEVELOPER")) {
+        return NextResponse.json(
+          { error: "Only verified developers can edit workflows" },
+          { status: 403 }
+        );
+      }
+
+      if (user.sellerVerificationStatus !== "APPROVED") {
+        return NextResponse.json(
+          {
+            error:
+              "Your developer account is not verified. Please complete the verification process before editing workflows.",
+            verificationStatus: user.sellerVerificationStatus,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // Create or find tags
     const tagPromises = tags.map(async (tagName: string) => {
       const existingTag = await prisma.tag.findUnique({

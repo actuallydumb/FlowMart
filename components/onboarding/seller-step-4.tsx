@@ -64,7 +64,7 @@ export default function SellerStep4({
 }: SellerStep4Props) {
   const handleComplete = () => {
     onNext({
-      step: 4,
+      step: getStepNumber("seller-4"),
       completed: true,
     });
   };
@@ -165,4 +165,7 @@ export default function SellerStep4({
       </div>
     </div>
   );
+}
+function getStepNumber(arg0: string) {
+  throw new Error("Function not implemented.");
 }

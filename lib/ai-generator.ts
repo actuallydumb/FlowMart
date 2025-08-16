@@ -103,11 +103,15 @@ Return only the JavaScript code, no explanations.
 
     const code = completion.choices[0]?.message?.content || "";
 
-    // In a real implementation, you would save this to a file
-    // For now, we'll return a mock file URL
+    // Save generated code to UploadThing or return as base64
+    const timestamp = Date.now();
+    const fileName = `generated-workflow-${timestamp}.js`;
+
+    // For now, return the code directly - in production, save to file storage
     return {
-      fileUrl: `/workflows/generated-${Date.now()}.js`,
+      fileUrl: `data:text/javascript;base64,${btoa(code)}`,
       code,
+      fileName,
     };
   }
 
